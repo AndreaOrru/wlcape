@@ -25,8 +25,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-// If CAPSLOCK is released within this timeout, send ESC instead.
-#define TIMEOUT_MS 200
 // Maximum number of supported keyboards.
 #define MAX_KEYBOARDS 16
 
@@ -36,8 +34,11 @@ typedef enum {
   DOWN = 1,
 } PressedState;
 
-PressedState capslock_state = UP;   // Pressed state of CAPSLOCK.
-struct timeval capslock_press_time; // Time when CAPSLOCK was pressed.
+PressedState capslock_state = UP;    // Pressed state of CAPSLOCK.
+struct timeval capslock_press_time;  // Time when CAPSLOCK was pressed.
+
+// If CAPSLOCK is released within this timeout, send ESC instead.
+int timeout_ms = 200;
 
 // Error handling.
 void die(const char *msg) {
@@ -178,7 +179,7 @@ int handleEvent(int uinput_fd, struct input_event *ev) {
           warn("Error while getting the time of CAPSLOCK release");
           return -1;
         }
-        if (capslock_state == DOWN && elapsed < TIMEOUT_MS) {
+        if (capslock_state == DOWN && elapsed < timeout_ms) {
           // If CAPSLOCK was released within the timeout, simulate ESC.
           if (uinputWriteEvent(uinput_fd, ev, KEY_ESC, DOWN) < 0) {
             warn("Error while sending ESC key press");
@@ -200,8 +201,30 @@ int handleEvent(int uinput_fd, struct input_event *ev) {
   return 0;
 }
 
-// Entry point.
-int main() {
+void printHelp(const char *program_name) {
+  printf("Usage: %s [-t TIMEOUT_MS] [-h]\n", program_name);
+  printf("Options:\n");
+  printf("  -t TIMEOUT_MS  Timeout for generating an ESC event.\n");
+  printf("  -h             Display this help message.\n");
+}
+
+int main(int argc, char *argv[]) {
+  // Option parsing.
+  int opt;
+  while ((opt = getopt(argc, argv, "ht:")) != -1) {
+    switch (opt) {
+      case 't':
+        timeout_ms = atoi(optarg);
+        break;
+      case 'h':
+        printHelp(argv[0]);
+        return 0;
+      default:
+        printHelp(argv[0]);
+        return 1;
+    }
+  }
+
   // Open keyboard fds.
   int kbd_fds[MAX_KEYBOARDS];
   int n_keyboards = getKeyboardsFds((int *)&kbd_fds);
