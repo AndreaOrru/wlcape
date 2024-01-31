@@ -18,7 +18,7 @@ make
 sudo make install
 ```
 
-By default, this will install the binary in `/usr/local/bin` and the systemd unit in `/usr/lib/systemd/system`.
+By default, this will install the binary in `/usr/local/bin` and the systemd service in `/usr/lib/systemd/system`.
 
 ## Usage
 
@@ -32,7 +32,7 @@ First, configure your desktop environment to remap Caps Lock to Ctrl.
 ### 2. Enable systemd service
 
 ```sh
-sudo systemcl enable --now wlcape.service
+sudo systemctl enable --now wlcape.service
 ```
 
 ## Contributing
