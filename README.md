@@ -1,6 +1,6 @@
 # wlcape
 
-Help remapping Caps Lock to Escape when pressed alone, or Ctrl otherwise.
+Helps remapping Caps Lock to Escape when pressed alone, or Ctrl otherwise.
 
 Like https://github.com/alols/xcape, but works on both X11 and Wayland.
 
