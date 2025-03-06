@@ -291,14 +291,20 @@ int main(int argc, char *argv[]) {
 
     // Process epoll events.
     for (int i = 0; i < n_events; i++) {
-      if (epoll_events[i].events & EPOLLIN) {
-        // Read an event from one of the keyboards.
-        int kbd_fd = epoll_events[i].data.fd;
+      int kbd_fd = epoll_events[i].data.fd;
+      if (epoll_events[i].events & (EPOLLHUP | EPOLLERR)) {
+        // Keyboard disconnected or in error state.
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, kbd_fd, NULL) < 0) {
+          warn("Error removing keyboard fd from epoll");
+        }
+        close(kbd_fd);
+        warn("Keyboard disconnected");
+      } else if (epoll_events[i].events & EPOLLIN) {
+        // Data available to read.
         if (read(kbd_fd, &ev, sizeof(ev)) < 0) {
           warn("Error reading event from keyboard device");
           continue;
         }
-        // Handle the keyboard event.
         handleEvent(uinput_fd, &ev);
       }
     }
